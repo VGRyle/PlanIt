@@ -8,9 +8,11 @@ class TodoistService
 {
     public function createTask($text)
     {
-        return Http::withToken(env('TODOIST_API_TOKEN'))
+        return Http::withToken(env('TODOIST_API_KEY'))
             ->post('https://api.todoist.com/rest/v2/tasks', [
                 'content' => $text
-            ])->json();
+            ])
+            ->json();
     }
 }
+
