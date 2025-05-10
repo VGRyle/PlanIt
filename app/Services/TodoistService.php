@@ -7,12 +7,20 @@ use Illuminate\Support\Facades\Http;
 class TodoistService
 {
     public function createTask($text)
-    {
-        return Http::withToken(env('TODOIST_API_KEY'))
-            ->post('https://api.todoist.com/rest/v2/tasks', [
-                'content' => $text
-            ])
-            ->json();
-    }
+{
+    $response = Http::withHeaders([
+        'Authorization' => env('TODOIST_API_KEY'),
+        'Content-Type' => 'application/json',
+    ])->post('https://api.todoist.com/rest/v2/tasks', [
+        'content' => $text
+    ]);
+
+    return [
+        'status' => $response->status(),
+        'body' => $response->json(),
+        'error' => $response->body()
+    ];
+}
+
 }
 
