@@ -8,12 +8,18 @@ class TimezoneService
 {
     public function getTimezone($lat, $lng)
     {
-        return Http::get('https://api.timezonedb.com/v2.1/get-time-zone', [
-            'key' => env('TIMEZONE_API_KEY'),
+        $apiKey = env('TIMEZONEDB_API_KEY');
+        \Log::info('API Key: ' . $apiKey);
+
+        $response = Http::get('http://api.timezonedb.com/v2.1/get-time-zone', [
+            'key' => env('TIMEZONEDB_API_KEY'), // Make sure your API key is set in .env
             'format' => 'json',
             'by' => 'position',
             'lat' => $lat,
-            'lng' => $lng
-        ])->json();
+            'lng' => $lng,
+        ]);
+
+        return $response->json();  // Return the response in JSON format
     }
+
 }

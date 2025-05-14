@@ -7,6 +7,7 @@ use App\Services\TodoistService;
 use App\Services\WeatherService;
 use App\Services\TimezoneService;
 use App\Services\CalendarService;
+use App\Services\RemindersService;
 
 class PlannerController extends Controller
 {
@@ -24,7 +25,6 @@ class PlannerController extends Controller
     {
         return response()->json($timezone->getTimezone($request->lat, $request->lng));
     }
-
     public function getHolidays($country, $year, CalendarService $calendar)
     {
         return response()->json($calendar->getHolidays($country, $year));
