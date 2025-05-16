@@ -72,6 +72,13 @@
     <pre id="holidaysResult"></pre>
   </section>
 
+  <!-- Get Quotes -->
+  <section>
+  <h2>💬 Quote of the Day</h2>
+  <button onclick="getMotivationalQuote()">Get Quote</button>
+  <pre id="motivationalQuoteResult"></pre>
+  </section>
+
   <script>
     const csrfToken = '{{ csrf_token() }}';
 
@@ -115,6 +122,25 @@
       .then(data => document.getElementById('holidaysResult').innerText = JSON.stringify(data, null, 2))
       .catch(err => document.getElementById('holidaysResult').innerText = 'Error: ' + err.message);
     }
+
+    function getMotivationalQuote() {
+      fetch('/api/quote/motivation')
+        .then(res => res.json())
+        .then(data => {
+          if (data.data && data.data.body && data.data.author) {
+            document.getElementById('motivationalQuoteResult').innerText =
+              `"${data.data.body}"\n— ${data.data.author}`;
+          } else {
+            document.getElementById('motivationalQuoteResult').innerText =
+              'No quote received.';
+          }
+        })
+        .catch(err => {
+          document.getElementById('motivationalQuoteResult').innerText =
+            'Error: ' + err.message;
+        });
+    }
+
   </script>
 
 </body>
