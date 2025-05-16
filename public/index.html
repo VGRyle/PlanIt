@@ -3,32 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <title>🌿 PlanIt Dashboard</title>
-  <style>
+   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Arial', sans-serif;
       padding: 2rem;
-      background: #f3f3f3;
+      background: #e9f5e9;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #4CAF50;
     }
     h2 {
-      color: #333;
+      color: #4CAF50;
+      border-bottom: 2px solid #4CAF50;
+      padding-bottom: 0.5rem;
     }
     section {
       background: white;
-      padding: 1rem;
+      padding: 1.5rem;
       margin-bottom: 1.5rem;
       border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s;
+    }
+    section:hover {
+      transform: translateY(-2px);
     }
     input, button {
       margin: 0.5rem 0;
-      padding: 0.5rem;
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: calc(100% - 1.5rem);
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #45a049;
     }
     pre {
-      background: #eee;
+      background: #f7f7f7;
       padding: 1rem;
+      border-radius: 4px;
       overflow-x: auto;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    @media (max-width: 600px) {
+      input, button {
+        width: 100%;
+      }
     }
   </style>
+
 </head>
 <body>
 
@@ -72,12 +107,24 @@
     <pre id="holidaysResult"></pre>
   </section>
 
+  <!-- Get Quotes -->
+  <section>
+  <h2>💬 Quote of the Day</h2>
+  <button onclick="getMotivationalQuote()">Get Quote</button>
+  <pre id="motivationalQuoteResult"></pre>
+  </section>
+
   <script>
+    const csrfToken = '{{ csrf_token() }}';
+
     function addTask() {
       const content = document.getElementById('taskContent').value;
       fetch('/api/task', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken
+        },
         body: JSON.stringify({ content })
       })
       .then(res => res.json())
@@ -94,13 +141,9 @@
     }
 
     function getTimezone() {
-      const lat = document.getElementById('lat').value;
-      const lng = document.getElementById('lng').value;
-      fetch('/api/timezone', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lat, lng })
-      })
+      const lat = encodeURIComponent(document.getElementById('lat').value);
+      const lng = encodeURIComponent(document.getElementById('lng').value);
+      fetch(`/api/timezone?lat=${lat}&lng=${lng}`)
       .then(res => res.json())
       .then(data => document.getElementById('timezoneResult').innerText = JSON.stringify(data, null, 2))
       .catch(err => document.getElementById('timezoneResult').innerText = 'Error: ' + err.message);
@@ -114,6 +157,25 @@
       .then(data => document.getElementById('holidaysResult').innerText = JSON.stringify(data, null, 2))
       .catch(err => document.getElementById('holidaysResult').innerText = 'Error: ' + err.message);
     }
+
+    function getMotivationalQuote() {
+      fetch('/api/quote/motivation')
+        .then(res => res.json())
+        .then(data => {
+          if (data.data && data.data.body && data.data.author) {
+            document.getElementById('motivationalQuoteResult').innerText =
+              `"${data.data.body}"\n— ${data.data.author}`;
+          } else {
+            document.getElementById('motivationalQuoteResult').innerText =
+              'No quote received.';
+          }
+        })
+        .catch(err => {
+          document.getElementById('motivationalQuoteResult').innerText =
+            'Error: ' + err.message;
+        });
+    }
+
   </script>
 
 </body>
