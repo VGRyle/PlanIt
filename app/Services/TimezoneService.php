@@ -12,7 +12,7 @@ class TimezoneService
         \Log::info('API Key: ' . $apiKey);
 
         $response = Http::get('http://api.timezonedb.com/v2.1/get-time-zone', [
-            'key' => env('TIMEZONEDB_API_KEY'), // Make sure your API key is set in .env
+            'key' => $apiKey,
             'format' => 'json',
             'by' => 'position',
             'lat' => $lat,
