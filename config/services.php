@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'favqs' => [
+    'key' => env('FAVQS_API_KEY'),
+    ],
+
 ];

@@ -7,6 +7,7 @@ use App\Services\TodoistService;
 use App\Services\WeatherService;
 use App\Services\TimezoneService;
 use App\Services\CalendarService;
+use App\Services\FavQsService;
 use App\Services\RemindersService;
 use Illuminate\Support\Facades\Log;
 
@@ -108,5 +109,25 @@ class PlannerController extends Controller
             return response()->json(['error' => 'Failed to get holidays', 'details' => $e->getMessage()], 500);
         }
     }
+
+    public function getMotivationalQuote(FavQsService $favqs)
+{
+    try {
+        $quote = $favqs->getQuoteOfTheDay();
+
+        if (!$quote) {
+            return response()->json(['error' => 'Failed to retrieve quote'], 502);
+        }
+
+        return response()->json([
+            'message' => 'Motivational quote retrieved successfully',
+            'data' => $quote
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Error fetching quote: ' . $e->getMessage());
+        return response()->json(['error' => 'Failed to fetch quote', 'details' => $e->getMessage()], 500);
+    }
+}
+
 }
 
