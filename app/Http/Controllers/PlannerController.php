@@ -33,27 +33,75 @@ class PlannerController extends Controller
     }
 
     public function getTimezone(Request $request, TimezoneService $timezone)
-    {
-        $lat = $request->input('lat');
-        $lng = $request->input('lng');
+{
+    $lat = $request->input('lat');
+    $lng = $request->input('lng');
+    $country = $request->input('country');
 
-        $response = $timezone->getTimezone($lat, $lng);
+    // If lat/lng are missing, try to get them from the country input
+    if (!$lat || !$lng) {
+        if (!$country) {
+            return response()->json(['error' => 'Latitude/Longitude or Country is required'], 400);
+        }
 
-        return response()->json(
-            $response['data'] ?? ['error' => $response['error']],
-            $response['status']
-        );
+        $coords = $this->getLatLngForCountry($country);
+        if (!$coords) {
+            return response()->json(['error' => 'Unsupported country'], 400);
+        }
+
+        $lat = $coords['lat'];
+        $lng = $coords['lng'];
     }
 
-    public function getHolidays($country, $year, CalendarService $calendar)
-    {
-        $response = $calendar->getHolidays($country, $year);
+    $response = $timezone->getTimezone($lat, $lng);
 
-        return response()->json(
-            $response['data'] ?? ['error' => $response['error']],
-            $response['status']
-        );
+    // Extract only important info
+    if (isset($response['data']) && $response['status'] === 200) {
+        $data = $response['data'];
+        $result = [
+            'country' => $data['countryName'] ?? '',
+            'city' => $data['cityName'] ?? '',
+            'time' => $data['formatted'] ?? '',
+        ];
+        return response()->json($result, 200);
     }
+
+    return response()->json(['error' => $response['error'] ?? 'Unknown error'], $response['status']);
+}
+private function getLatLngForCountry($country)
+{
+    $country = strtolower(trim($country));
+
+    $map = [
+        'philippines' => ['lat' => 14.5995, 'lng' => 120.9842],
+        'ph' => ['lat' => 14.5995, 'lng' => 120.9842],
+
+        'usa' => ['lat' => 37.7749, 'lng' => -122.4194],
+        'us' => ['lat' => 37.7749, 'lng' => -122.4194],
+
+        'japan' => ['lat' => 35.6895, 'lng' => 139.6917],
+        'jp' => ['lat' => 35.6895, 'lng' => 139.6917],
+
+        'uk' => ['lat' => 51.5074, 'lng' => -0.1278],
+        'gb' => ['lat' => 51.5074, 'lng' => -0.1278],
+        'united kingdom' => ['lat' => 51.5074, 'lng' => -0.1278],
+    ];
+
+    return $map[$country] ?? null;
+}
+
+
+public function getHolidays($country, $year, CalendarService $calendar)
+{
+    $month = request()->query('month'); // from query string ?month=5
+    $response = $calendar->getHolidays($country, $year, $month);
+
+    return response()->json(
+        $response['data'] ?? ['error' => $response['error']],
+        $response['status']
+    );
+}
+
 
     public function getMotivationalQuote(FavQsService $favqs)
     {
