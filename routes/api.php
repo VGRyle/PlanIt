@@ -6,5 +6,6 @@ use App\Http\Controllers\PlannerController;
 Route::post('/task', [PlannerController::class, 'addTask']);
 Route::get('/weather/{city}', [PlannerController::class, 'getWeather']);
 Route::get('/timezone', [PlannerController::class, 'getTimezone']);
-Route::get('/holidays/{country}/{year}', [PlannerController::class, 'getHolidays']);
+Route::get('/holidays/{country}/{year}', [PlannerController::class, 'getHolidays']);    
 Route::get('/quote/motivation', [PlannerController::class, 'getMotivationalQuote']);
+Route::post('/planit/compile', [PlannerController::class, 'compilePlan']);

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>🌿 PlanIt Dashboard</title>
+  <title>PlanIt Dashboard</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -32,11 +32,11 @@
 </head>
 <body>
 
-  <h1>🌿 PlanIt API Tester</h1>
+  <h1>PlanIt API Tester</h1>
 
   <!-- Add Task -->
   <section>
-    <h2>📝 Add Task (Todoist)</h2>
+    <h2>Add Task (Todoist)</h2>
     <input type="text" id="taskContent" placeholder="Task content">
     <br>
     <button onclick="addTask()">Add Task</button>
@@ -45,7 +45,7 @@
 
   <!-- Get Weather -->
   <section>
-    <h2>🌦️ Get Weather</h2>
+    <h2>Get Weather</h2>
     <input type="text" id="city" placeholder="City name">
     <br>
     <button onclick="getWeather()">Get Weather</button>
@@ -54,7 +54,7 @@
 
   <!-- Get Timezone -->
   <section>
-    <h2>🕒 Get Timezone</h2>
+    <h2>Get Timezone</h2>
     <input type="text" id="lat" placeholder="Latitude" value="14.5995">
     <input type="text" id="lng" placeholder="Longitude" value="120.9842">
     <br>
@@ -64,7 +64,7 @@
 
   <!-- Get Holidays -->
   <section>
-    <h2>🎉 Get Holidays</h2>
+    <h2>Get Holidays</h2>
     <input type="text" id="country" placeholder="Country code (e.g. PH)">
     <input type="text" id="year" placeholder="Year (e.g. 2025)">
     <br>
@@ -74,22 +74,31 @@
 
   <!-- Get Quotes -->
   <section>
-  <h2>💬 Quote of the Day</h2>
-  <button onclick="getMotivationalQuote()">Get Quote</button>
-  <pre id="motivationalQuoteResult"></pre>
+    <h2>Quote of the Day</h2>
+    <button onclick="getMotivationalQuote()">Get Quote</button>
+    <pre id="motivationalQuoteResult"></pre>
+  </section>
+
+  <!-- Compile Plan -->
+  <section>
+    <h2>New Task</h2>
+    <input type="text" id="planContent" placeholder="Task content">
+    <input type="text" id="planCity" placeholder="City">
+    <input type="text" id="planLat" placeholder="Latitude">
+    <input type="text" id="planLng" placeholder="Longitude">
+    <input type="text" id="planCountry" placeholder="Country code (e.g. PH)">
+    <input type="text" id="planYear" placeholder="Year (e.g. 2025)">
+    <br>
+    <button onclick="compilePlan()">Create</button>
+    <pre id="planResult"></pre>
   </section>
 
   <script>
-    const csrfToken = '{{ csrf_token() }}';
-
     function addTask() {
       const content = document.getElementById('taskContent').value;
       fetch('/api/task', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content })
       })
       .then(res => res.json())
@@ -106,9 +115,9 @@
     }
 
     function getTimezone() {
-      const lat = encodeURIComponent(document.getElementById('lat').value);
-      const lng = encodeURIComponent(document.getElementById('lng').value);
-      fetch(`/api/timezone?lat=${lat}&lng=${lng}`)
+      const lat = document.getElementById('lat').value;
+      const lng = document.getElementById('lng').value;
+      fetch(`/api/timezone?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`)
       .then(res => res.json())
       .then(data => document.getElementById('timezoneResult').innerText = JSON.stringify(data, null, 2))
       .catch(err => document.getElementById('timezoneResult').innerText = 'Error: ' + err.message);
@@ -127,20 +136,36 @@
       fetch('/api/quote/motivation')
         .then(res => res.json())
         .then(data => {
-          if (data.data && data.data.body && data.data.author) {
-            document.getElementById('motivationalQuoteResult').innerText =
-              `"${data.data.body}"\n— ${data.data.author}`;
+          if (data && data.body && data.author) {
+            document.getElementById('motivationalQuoteResult').innerText = `"${data.body}"\n— ${data.author}`;
           } else {
-            document.getElementById('motivationalQuoteResult').innerText =
-              'No quote received.';
+            document.getElementById('motivationalQuoteResult').innerText = 'No quote received.';
           }
         })
         .catch(err => {
-          document.getElementById('motivationalQuoteResult').innerText =
-            'Error: ' + err.message;
+          document.getElementById('motivationalQuoteResult').innerText = 'Error: ' + err.message;
         });
     }
 
+    function compilePlan() {
+      const payload = {
+        content: document.getElementById('planContent').value,
+        city: document.getElementById('planCity').value,
+        lat: document.getElementById('planLat').value,
+        lng: document.getElementById('planLng').value,
+        country: document.getElementById('planCountry').value,
+        year: document.getElementById('planYear').value
+      };
+
+      fetch('/api/planit/compile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => document.getElementById('planResult').innerText = JSON.stringify(data, null, 2))
+      .catch(err => document.getElementById('planResult').innerText = 'Error: ' + err.message);
+    }
   </script>
 
 </body>
