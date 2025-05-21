@@ -136,6 +136,29 @@ select:focus {
     }
   }
 </style>
+
+<header>
+    @if (Route::has('login'))
+        <nav>
+            @auth
+                <a href="{{ url('/dashboard') }}">Dashboard</a>
+
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: inline;">
+                    @csrf
+                    <button type="submit" style="background:none; border:none; padding:0; cursor:pointer; color:blue; text-decoration:underline;">
+                        Logout
+                    </button>
+                </form>
+            @else
+                <a href="{{ route('login') }}">Login</a>
+
+                @if (Route::has('register'))
+                    <a href="{{ route('register') }}">Register</a>
+                @endif
+            @endauth
+        </nav>
+    @endif
+</header>
 </head>
 
 <body>
