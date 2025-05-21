@@ -4,16 +4,55 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class TimezoneService
 {
-    public function getTimezone($lat, $lng)
+    protected $countryCoords = [
+        'philippines' => ['lat' => 14.5995, 'lng' => 120.9842],
+        'ph' => ['lat' => 14.5995, 'lng' => 120.9842],
+
+        'usa' => ['lat' => 37.7749, 'lng' => -122.4194],
+        'us' => ['lat' => 37.7749, 'lng' => -122.4194],
+
+        'japan' => ['lat' => 35.6895, 'lng' => 139.6917],
+        'jp' => ['lat' => 35.6895, 'lng' => 139.6917],
+
+        'uk' => ['lat' => 51.5074, 'lng' => -0.1278],
+        'gb' => ['lat' => 51.5074, 'lng' => -0.1278],
+        'united kingdom' => ['lat' => 51.5074, 'lng' => -0.1278],
+    ];
+
+    public function getLatLngForCountry(string $country): ?array
     {
+        $key = Str::lower(trim($country));
+        return $this->countryCoords[$key] ?? null;
+    }
+
+    /**
+     * Main method to get timezone by lat/lng or country
+     */
+    public function getTimezone(?float $lat, ?float $lng, ?string $country = null)
+    {
+        // Try resolving lat/lng if missing but country provided
         if (!$lat || !$lng) {
-            return [
-                'status' => 400,
-                'error' => 'Latitude and longitude required'
-            ];
+            if (!$country) {
+                return [
+                    'status' => 400,
+                    'error' => 'Latitude and longitude or country are required',
+                ];
+            }
+
+            $coords = $this->getLatLngForCountry($country);
+            if (!$coords) {
+                return [
+                    'status' => 400,
+                    'error' => 'Unsupported country',
+                ];
+            }
+
+            $lat = $coords['lat'];
+            $lng = $coords['lng'];
         }
 
         try {
@@ -30,19 +69,19 @@ class TimezoneService
             if ($response->failed()) {
                 return [
                     'status' => $response->status(),
-                    'error' => 'Timezone API returned no data or error: ' . $response->body()
+                    'error' => 'Timezone API returned error: ' . $response->body(),
                 ];
             }
 
             return [
                 'status' => 200,
-                'data' => $response->json()
+                'data' => $response->json(),
             ];
         } catch (\Exception $e) {
             Log::error('Error fetching timezone: ' . $e->getMessage());
             return [
                 'status' => 500,
-                'error' => 'Failed to get timezone: ' . $e->getMessage()
+                'error' => 'Failed to get timezone: ' . $e->getMessage(),
             ];
         }
     }
