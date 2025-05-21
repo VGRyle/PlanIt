@@ -9,18 +9,39 @@ use App\Services\TimezoneService;
 use App\Services\CalendarService;
 use App\Services\FavQsService;
 use App\Services\PlanItService;
+use App\Models\Task;
 
 class PlannerController extends Controller
 {
-    public function addTask(Request $request, TodoistService $todoist)
-    {
-        $response = $todoist->createTask($request->input('content'));
+   
+    public function addTask(Request $request)
+{
+    $request->validate([
+        'content' => 'required|max:255',
+        'description' => 'nullable|string',
+        'due_date' => 'nullable|date',
+    ]);
 
-        return response()->json(
-            $response['data'] ?? ['error' => $response['error']],
-            $response['status']
-        );
-    }
+    $content = $request->input('content');
+    $description = $request->input('description');
+    $due_date = $request->input('due_date');
+
+    // Remove Todoist API call
+    // $response = $todoist->createTask($content);
+
+    // Save only to local database
+    $task = Task::create([
+        'content' => $content,
+        'description' => $description,
+        'due_date' => $due_date,
+        'is_completed' => false,
+    ]);
+
+    return response()->json([
+        'local_task' => $task,
+    ], 201);
+}
+
 
     public function getWeather($city, WeatherService $weather)
     {
@@ -125,4 +146,50 @@ public function getHolidays($country, $year, CalendarService $calendar)
 
         return response()->json($response['data'], $response['status']);
     }
+
+
+public function getTasks()
+{
+    $tasks = Task::orderBy('due_date')->get();
+    return response()->json($tasks);
+}
+
+// Store task (API)
+public function storeTask(Request $request)
+{
+    $request->validate([
+        'content' => 'required|max:255',
+        'description' => 'nullable|string',
+        'due_date' => 'nullable|date',
+    ]);
+
+    $task = Task::create($request->only('content', 'description', 'due_date'));
+
+    return response()->json($task, 201);
+}
+
+// Delete task (API)
+public function deleteTask($id)
+{
+    $task = Task::find($id);
+
+    if (!$task) {
+        return response()->json(['error' => 'Task not found'], 404);
+    }
+
+    $task->delete();
+
+    return response()->json(['message' => 'Task deleted']);
+}
+
+public function toggleComplete($id)
+{
+    $task = Task::find($id);
+    if (!$task) return response()->json(['error' => 'Task not found'], 404);
+
+    $task->is_completed = !$task->is_completed;
+    $task->save();
+
+    return response()->json(['success' => true, 'is_completed' => $task->is_completed]);
+}
 }

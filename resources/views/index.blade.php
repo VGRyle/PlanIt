@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta charset="UTF-8">
   <title>🌿 PlanIt Dashboard</title>
   <style>
@@ -135,6 +136,7 @@ select:focus {
     }
   }
 </style>
+</head>
 
 <body>
 
@@ -142,8 +144,15 @@ select:focus {
 
   <!-- Add Task -->
   <section>
+    <h2>Your Tasks</h2>
+    <ul id="task-list" style="list-style:none; padding-left:0;"></ul>
+  </section>
+
+  <section>
     <h2>Add Task (Todoist)</h2>
-    <input type="text" id="taskContent" placeholder="Task content">
+    <input type="text" id="taskContent" placeholder="Task title">
+    <input type="text" id="taskDescription" placeholder="Task description">
+    <input type="date" id="taskDueDate">
     <br>
     <button onclick="addTask()">Add Task</button>
     <pre id="taskResult"></pre>
@@ -199,46 +208,140 @@ select:focus {
     <pre id="motivationalQuoteResult"></pre>
   </section>
 
-  <!-- Compile Plan -->
-  <section>
-    <h2>New Task</h2>
-    <input type="text" id="planContent" placeholder="Task content">
-    <input type="text" id="planCity" placeholder="City">
-    <input type="text" id="planLat" placeholder="Latitude">
-    <input type="text" id="planLng" placeholder="Longitude">
-    <input type="text" id="planCountry" placeholder="Country code (e.g. PH)">
-    <input type="text" id="planYear" placeholder="Year (e.g. 2025)">
-    <br>
-    <button onclick="compilePlan()">Create</button>
-    <pre id="planResult"></pre>
-  </section>
-
   <script>
-    function addTask() {
-  const content = document.getElementById('taskContent').value;
-  fetch('/api/task', {
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+   // Load and render tasks
+  function loadTasks() {
+   fetch(`/api/tasks/`, )
+      .then(res => res.json())
+      .then(tasks => {
+        const taskList = document.getElementById('task-list');
+        taskList.innerHTML = '';
+
+        tasks.forEach(task => {
+          const li = document.createElement('li');
+          li.style.marginBottom = '0.8rem';
+
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.checked = task.is_completed || false;
+          checkbox.style.marginRight = '0.6rem';
+          checkbox.style.width = '16px';    // smaller width
+          checkbox.style.height = '16px';   // smaller height
+          checkbox.style.cursor = 'pointer';
+
+            // Add simple hover effect
+            checkbox.onmouseover = () => {
+              checkbox.style.borderColor = '#4caf50'; // green border on hover
+            };
+            checkbox.onmouseout = () => {
+              checkbox.style.borderColor = ''; // reset border
+            };
+
+            checkbox.onchange = () => toggleComplete(task.id);
+
+          // Task content text
+          const text = document.createTextNode(`${task.content} (Due: ${task.due_date || 'None'})`);
+
+          // Delete button
+          const delBtn = document.createElement('button');
+          delBtn.textContent = 'Delete';
+          delBtn.style.marginLeft = '1rem';
+          delBtn.style.backgroundColor = '#ff4d4d';
+          delBtn.style.color = '#fff';
+          delBtn.style.border = 'none';
+          delBtn.style.borderRadius = '4px';
+          delBtn.style.padding = '4px 8px';
+          delBtn.style.cursor = 'pointer';
+          delBtn.onclick = () => deleteTask(task.id);
+
+          li.appendChild(checkbox);
+          li.appendChild(text);
+          li.appendChild(delBtn);
+
+          taskList.appendChild(li);
+        });
+      })
+      .catch(err => {
+        console.error('Failed to load tasks:', err);
+      });
+  }
+
+  // Add task, then refresh list
+ function addTask() {
+  const content = document.getElementById('taskContent').value.trim();
+  const description = document.getElementById('taskDescription').value.trim();
+  const due_date = document.getElementById('taskDueDate').value;
+
+  if (!content) {
+    alert('Task content cannot be empty');
+    return;
+  }
+
+  fetch(`/api/tasks`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content })
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': csrfToken,
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({ content, description, due_date })
   })
-  .then(res => res.json())
+  .then(res => {
+    if (!res.ok) return res.json().then(err => Promise.reject(err));
+    return res.json();
+  })
   .then(data => {
-    const simplified = {
-      content: data.content || '',
-      description: data.description || '',
-      created_at: data.created_at || '',
-      deadline: data.due?.date || 'None'
-    };
-    document.getElementById('taskResult').innerText = JSON.stringify(simplified, null, 2);
-  })
+    document.getElementById('taskContent').value = '';
+    document.getElementById('taskDescription').value = '';
+    document.getElementById('taskDueDate').value = '';
+    loadTasks();
+   document.getElementById('taskResult').innerText = 
+    `Task added successfully:\n` +
+    `• Title: ${data.content}\n` +
+    `• Description: ${data.description || 'None'}\n` +
+    `• Due Date: ${data.due_date || 'None'}\n` 
+})
   .catch(err => {
-    document.getElementById('taskResult').innerText = 'Error: ' + err.message;
+    document.getElementById('taskResult').innerText = `Error: ${err.message || 'Unknown error'}`;
   });
 }
 
+  // Delete task by ID
+  function deleteTask(id) {
+  if (!confirm('Are you sure you want to delete this task?')) return;
+
+  fetch(`/api/tasks/${id}`, {
+    method: 'DELETE',
+    headers: { 'X-CSRF-TOKEN': csrfToken }
+  })
+  .then(res => {
+    if (res.ok) {
+      loadTasks();
+    } else {
+      alert('Failed to delete task');
+    }
+  })
+  .catch(err => alert('Error deleting task: ' + err.message));
+}
+
+  // Toggle task completion status
+  function toggleComplete(id) {
+  fetch(`/api/tasks/${id}/toggle`, {
+    method: 'PATCH',
+    headers: { 'X-CSRF-TOKEN': csrfToken }
+  })
+  .then(res => res.json())
+  .then(() => loadTasks())
+  .catch(err => alert('Error toggling task completion: ' + err.message));
+}
+
+
 function getWeather() {
   const city = document.getElementById('city').value;
-  fetch(`/api/weather/${encodeURIComponent(city)}`)
+fetch(`/api/weather/${encodeURIComponent(city)}`)
     .then(res => res.json())
     .then(data => {
       if (data && !data.error) {
@@ -254,7 +357,12 @@ function getWeather() {
         };
 
         // Show simplified details as formatted JSON
-        document.getElementById('weatherResult').innerText = JSON.stringify(simplified, null, 2);
+        document.getElementById('weatherResult').innerText =
+          `Weather in ${simplified.location}:\n` +
+          `• Condition: ${simplified.weather}\n` +
+          `• Temperature: ${simplified.temperature_c}\n` +
+          `• Humidity: ${simplified.humidity}\n` +
+          `• Wind Speed: ${simplified.wind_speed}`;
       } else {
         document.getElementById('weatherResult').innerText = 'No weather data found.';
       }
@@ -264,18 +372,27 @@ function getWeather() {
     });
 }
 
-    function getTimezone() {
-const country = document.getElementById('countryName').value;
+   function getTimezone() {
+  const country = document.getElementById('countryName').value;
 
   fetch(`/api/timezone?country=${encodeURIComponent(country)}`)
     .then(res => res.json())
     .then(data => {
-      document.getElementById('timezoneResult').innerText = JSON.stringify(data, null, 2);
+      if (data.error) {
+        document.getElementById('timezoneResult').innerText = 'Error: ' + data.error;
+        return;
+      }
+
+      document.getElementById('timezoneResult').innerText =
+        `Country: ${data.country || 'N/A'}\n` +
+        `City: ${data.city || 'N/A'}\n` +
+        `Current Time: ${data.time || 'Unavailable'}`;
     })
     .catch(err => {
       document.getElementById('timezoneResult').innerText = 'Error: ' + err.message;
     });
 }
+
 
 
 function getHolidays() {
@@ -291,54 +408,49 @@ function getHolidays() {
         return;
       }
 
-      const simplified = data.map(holiday => ({
-        name: holiday.name,
-        date: holiday.date?.iso
-      }));
+      const holidayList = data
+  .map(h => {
+    const date = h.date?.iso;
+    const formatted = date
+      ? new Date(date).toLocaleString('en-PH', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+          timeZoneName: 'short'
+        })
+      : 'Date unknown';
 
-      document.getElementById('holidaysResult').innerText = JSON.stringify(simplified, null, 2);
+    return `• ${h.name} — ${formatted}`;
+  })
+  .join('\n');
+
+      document.getElementById('holidaysResult').innerText = `Holidays:\n${holidayList}`;
     })
     .catch(err => {
       document.getElementById('holidaysResult').innerText = 'Error: ' + err.message;
     });
 }
 
-
-
     function getMotivationalQuote() {
-      fetch('/api/quote/motivation')
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.body && data.author) {
-            document.getElementById('motivationalQuoteResult').innerText = `"${data.body}"\n— ${data.author}`;
-          } else {
-            document.getElementById('motivationalQuoteResult').innerText = 'No quote received.';
-          }
-        })
-        .catch(err => {
-          document.getElementById('motivationalQuoteResult').innerText = 'Error: ' + err.message;
-        });
-    }
+  fetch('/api/quote/motivation')
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.body && data.author) {
+        document.getElementById('motivationalQuoteResult').innerText = `"${data.body}"\n— ${data.author}`;
+      } else {
+        document.getElementById('motivationalQuoteResult').innerText = 'No quote received.';
+      }
+    })
+    .catch(err => {
+      document.getElementById('motivationalQuoteResult').innerText = 'Error: ' + err.message;
+    });
+}
 
-    function compilePlan() {
-      const payload = {
-        content: document.getElementById('planContent').value,
-        city: document.getElementById('planCity').value,
-        lat: document.getElementById('planLat').value,
-        lng: document.getElementById('planLng').value,
-        country: document.getElementById('planCountry').value,
-        year: document.getElementById('planYear').value
-      };
 
-      fetch('/api/planit/compile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      .then(res => res.json())
-      .then(data => document.getElementById('planResult').innerText = JSON.stringify(data, null, 2))
-      .catch(err => document.getElementById('planResult').innerText = 'Error: ' + err.message);
-    }
+    window.addEventListener('DOMContentLoaded', loadTasks);
+  
   </script>
 
 </body>
