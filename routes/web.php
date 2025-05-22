@@ -1,23 +1,27 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProfileController;
 
-// Set '/' to your index view and require auth
-Route::get('/', function () {
-    return view('index');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Public landing page for everyone (guests and users)
+    Route::get('/', function () {
+    return view('welcome'); // This shows login/register for guests
+    })->name('home');
 
-// You can remove or rename the existing /dashboard route
-// Route::get('/dashboard', function () {
-//     return view('dashboard');
-// })->middleware(['auth', 'verified'])->name('dashboard');
+// Authenticated dashboard (your main app)
+    Route::get('/dashboard', function () {
+    return view('index'); // Your custom dashboard view
+    })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+// Profile routes (still protected by auth)
+    Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Auth routes (login, register, etc.)
 require __DIR__.'/auth.php';
+
+
 
