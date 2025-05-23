@@ -30,19 +30,32 @@ class PlanItService
     {
         $task = $this->todoist->createTask($content);
         $weather = $this->weather->getWeather($city);
-        $timezone = $this->timezone->getTimezone($lat, $lng);
+        $timezone = $this->timezone->getTimezone($lat, $lng, $country);
         $holidays = $this->calendar->getHolidays($country, $year);
         $quote = $this->favqs->getQuoteOfTheDay();
 
         return [
             'status' => 200,
             'data' => [
-                'task' => $task['data'] ?? ['error' => $task['error']],
-                'weather' => $weather['data'] ?? ['error' => $weather['error']],
-                'timezone' => $timezone['data'] ?? ['error' => $timezone['error']],
-                'holidays' => $holidays['data'] ?? ['error' => $holidays['error']],
-                'quote' => $quote['data'] ?? ['error' => $quote['error']]
-            ]
+                'task' => $this->normalizeResponse($task),
+                'weather' => $this->normalizeResponse($weather),
+                'timezone' => $this->normalizeResponse($timezone),
+                'holidays' => $this->normalizeResponse($holidays),
+                'quote' => $this->normalizeResponse($quote),
+            ],
         ];
+    }
+
+    protected function normalizeResponse(array $response): array
+    {
+        if (isset($response['data'])) {
+            return $response['data'];
+        }
+
+        if (isset($response['error'])) {
+            return ['error' => $response['error']];
+        }
+
+        return ['error' => 'Unknown error'];
     }
 }

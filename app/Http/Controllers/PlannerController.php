@@ -9,29 +9,28 @@ use App\Services\TimezoneService;
 use App\Services\CalendarService;
 use App\Services\FavQsService;
 use App\Services\PlanItService;
-use App\Models\Task;
+use App\Services\TaskService;
 
 class PlannerController extends Controller
 {
     public function addTask(Request $request)
-{
-    $request->validate([
-        'content' => 'required|max:255',
-        'description' => 'nullable|string',
-        'due_date' => 'nullable|date',
-    ]);
+    {
+        $request->validate([
+            'content' => 'required|max:255',
+            'description' => 'nullable|string',
+            'due_date' => 'nullable|date',
+        ]);
 
-    $task = Task::create($request->only('content', 'description', 'due_date') + ['is_completed' => false]);
+        $task = Task::create($request->only('content', 'description', 'due_date') + ['is_completed' => false]);
 
-    return response()->json([
-        'local_task' => $task,
-    ], 201);
-}
+        return response()->json([
+            'local_task' => $task,
+        ], 201);
+    }
 
     public function getWeather($city, WeatherService $weather)
     {
         $response = $weather->getWeather($city);
-
         return response()->json(
             $response['data'] ?? ['error' => $response['error']],
             $response['status']
@@ -40,29 +39,21 @@ class PlannerController extends Controller
 
     public function getTimezone(Request $request, TimezoneService $timezone)
     {
-        $lat = $request->input('lat');
-        $lng = $request->input('lng');
-        $country = $request->input('country');
+        $response = $timezone->getTimezone(
+            $request->input('lat'),
+            $request->input('lng'),
+            $request->input('country')
+        );
 
-        $response = $timezone->getTimezone($lat, $lng, $country);
-
-        if ($response['status'] !== 200) {
-            return response()->json(['error' => $response['error'] ?? 'Unknown error'], $response['status']);
-        }
-
-        $data = $response['data'];
-        $result = [
-            'country' => $data['countryName'] ?? '',
-            'city' => $data['cityName'] ?? '',
-            'time' => $data['formatted'] ?? '',
-        ];
-
-        return response()->json($result, 200);
+        return response()->json(
+            $response['data'] ?? ['error' => $response['error'] ?? 'Unknown error'],
+            $response['status']
+        );
     }
 
     public function getHolidays($country, $year, CalendarService $calendar)
     {
-        $month = request()->query('month'); // from query string ?month=5
+        $month = request()->query('month');
         $response = $calendar->getHolidays($country, $year, $month);
 
         return response()->json(
@@ -95,49 +86,31 @@ class PlannerController extends Controller
         return response()->json($response['data'], $response['status']);
     }
 
-    public function getTasks()
+    public function getTasks(TaskService $taskService)
     {
-        $tasks = Task::orderBy('due_date')->get();
+        $tasks = $taskService->getAllTasks();
         return response()->json($tasks);
     }
 
-    public function storeTask(Request $request)
+    public function deleteTask($id, TaskService $taskService)
     {
-        $request->validate([
-            'content' => 'required|max:255',
-            'description' => 'nullable|string',
-            'due_date' => 'nullable|date',
-        ]);
+        $response = $taskService->deleteTask($id);
 
-        $task = Task::create($request->only('content', 'description', 'due_date'));
-
-        return response()->json($task, 201);
-    }
-
-    public function deleteTask($id)
-    {
-        $task = Task::find($id);
-
-        if (!$task) {
-            return response()->json(['error' => 'Task not found'], 404);
+        if (isset($response['error'])) {
+            return response()->json(['error' => $response['error']], $response['status']);
         }
 
-        $task->delete();
-
-        return response()->json(['message' => 'Task deleted']);
+        return response()->json($response['data'], $response['status']);
     }
 
-    public function toggleComplete($id)
+    public function toggleComplete($id, TaskService $taskService)
     {
-        $task = Task::find($id);
+        $response = $taskService->toggleComplete($id);
 
-        if (!$task) {
-            return response()->json(['error' => 'Task not found'], 404);
+        if (isset($response['error'])) {
+            return response()->json(['error' => $response['error']], $response['status']);
         }
 
-        $task->is_completed = !$task->is_completed;
-        $task->save();
-
-        return response()->json(['success' => true, 'is_completed' => $task->is_completed]);
+        return response()->json($response['data'], $response['status']);
     }
 }
