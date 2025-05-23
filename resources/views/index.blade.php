@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>🌿 PlanIt Dashboard</title>
+  <title>PlanIt</title>
 
   <style>
   @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Text:wght@400;600&display=swap');
@@ -36,6 +36,11 @@
     position: sticky;
     top: 0;
     z-index: 999;
+  }
+
+  header .logo {
+    font-size: 1.5rem;
+    font-weight: 700;
   }
 
   header nav.auth-nav {
@@ -77,8 +82,8 @@
     gap: 10px;
   }
   nav.sidebar a {
-    padding: 14px 22px; /* bigger padding */
-    font-size: 1.1rem; /* bigger font */
+    padding: 14px 22px; 
+    font-size: 1.1rem; 
     font-weight: 500;
     text-decoration: none;
     color: #1d1d1f;
@@ -93,7 +98,7 @@
 
   main.content {
     flex-grow: 1;
-    padding: 32px 40px; /* more padding */
+    padding: 32px 40px;
     overflow-y: auto;
     background-color: #ffffff;
   }
@@ -102,20 +107,20 @@
     margin-bottom: 40px;
   }
   section h2 {
-    font-size: 1.6rem; /* bigger headings */
+    font-size: 1.6rem; 
     font-weight: 600;
     margin-bottom: 20px;
   }
 
   input, select, button {
     font-family: inherit;
-    font-size: 16px; /* bigger inputs/buttons */
+    font-size: 16px;
   }
 
   input, select {
     width: 100%;
-    padding: 14px 20px; /* bigger padding */
-    margin-bottom: 20px; /* more margin */
+    padding: 14px 20px; 
+    margin-bottom: 20px; 
     border: 1.5px solid #c7c7cc;
     border-radius: 12px;
     background: #ffffff;
@@ -128,7 +133,7 @@
   }
 
   button {
-    padding: 14px 28px; /* bigger clickable area */
+    padding: 14px 28px; 
     border: none;
     border-radius: 14px;
     background-color: #007aff;
@@ -137,7 +142,7 @@
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
     transition: background-color 0.2s ease, box-shadow 0.2s ease;
-    min-height: 44px; /* Apple recommended touch target */
+    min-height: 44px; 
     min-width: 130px;
   }
   button:hover {
@@ -149,12 +154,12 @@
     box-shadow: none;
   }
 
-  /* NEW: spacing for action buttons container */
+  
   .actions {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
-    margin-bottom: 2rem; /* increased spacing below buttons */
+    margin-bottom: 2rem; 
   }
 
   #task-list {
@@ -224,7 +229,7 @@
     font-size: 1rem;
     color: #1d1d1f;
     overflow-x: auto;
-    min-height: 200px; /* make results area larger */
+    min-height: 200px; 
   }
 
   @media (max-width: 768px) {
@@ -253,7 +258,7 @@
 
 <body>
 
-  <header>PlanIt
+  <header><span class="logo">PlanIt</span>
     @if (Route::has('login'))
   <nav class="auth-nav">
     @auth
@@ -570,7 +575,10 @@ function getHolidays() {
 }
 
 
-    window.addEventListener('DOMContentLoaded', loadTasks);
+    window.addEventListener('DOMContentLoaded', () => {
+  renderTasks();
+});
+
   </script>
 
 </body>

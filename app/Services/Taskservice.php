@@ -11,30 +11,55 @@ class TaskService
         return Task::orderBy('due_date')->get();
     }
 
-    public function createTask(array $data)
+    public function createTask(array $data): array
     {
-        return Task::create([
+        $task = Task::create([
             'content' => $data['content'],
             'description' => $data['description'] ?? null,
             'due_date' => $data['due_date'] ?? null,
             'is_completed' => false,
         ]);
+
+        return [
+            'status' => 201,
+            'data' => $task,
+        ];
     }
 
-    public function deleteTask(int $id): bool
+    public function deleteTask(int $id): array
     {
         $task = Task::find($id);
-        if (!$task) return false;
+        if (!$task) {
+            return [
+                'status' => 404,
+                'error' => 'Task not found',
+            ];
+        }
+
         $task->delete();
-        return true;
+
+        return [
+            'status' => 200,
+            'data' => ['message' => 'Task deleted successfully'],
+        ];
     }
 
-    public function toggleComplete(int $id)
+    public function toggleComplete(int $id): array
     {
         $task = Task::find($id);
-        if (!$task) return null;
+        if (!$task) {
+            return [
+                'status' => 404,
+                'error' => 'Task not found',
+            ];
+        }
+
         $task->is_completed = !$task->is_completed;
         $task->save();
-        return $task->is_completed;
+
+        return [
+            'status' => 200,
+            'data' => ['is_completed' => $task->is_completed],
+        ];
     }
 }

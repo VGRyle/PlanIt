@@ -14,90 +14,113 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
 
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            font-family: 'Poppins', sans-serif;
-            background: #fff;
-        }
+ <style>
+  * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-        .container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #ffffff;
-        }
+body, html {
+  margin: 0;
+  padding: 0; 
+  font-family: 'Poppins', sans-serif;
+  background:rgb(251, 251, 255) !important;
+  height: 100%; 
+  overflow: hidden; 
+}
 
-        .content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 80vh;
-            width: 100%;
-            max-width: 1200px;
-            background: #f7efe7;
-            border-radius: 20px;
-            padding: 60px;
-            box-shadow: 0px 0px 30px 3px #00000040;
-            text-align: center;
-        }
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;  
+  width: 100%; 
+}
 
-        .image-section {
-            flex: 1;
-            text-align: center;
-            height: 80vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+.content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: auto;  
+  width: 100%;
+  max-width: 1200px;
+  background: #FFFFFF; 
+  border-radius: 20px;
+  padding: 60px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); 
+  text-align: center;
+  color: #4A4440; 
+}
 
-        .image-section img {
-            max-width: 90%;
-            height: auto;
-            max-height: 100%;
-        }
+.image-section, .text-section {
+  flex: 1 1 50%;
+  min-width: 300px;
+  text-align: center;
+}
 
-        h1 {
-            font-size: 48px;
-            color: #494242;
-            margin-top: 100px;
-        }
+.image-section img {
+  max-width: 100%;
+  height: auto;
+}
 
-        .description {
-            font-size: 20px;
-            color: #494242;
-            max-width: 600px;
-            margin: 10px auto 0;
-        }
+.text-section h1 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  color: black; 
+}
 
-        .btn {
-            margin-top: 90px;
-            padding: 15px 90px;
-            font-size: 20px;
-            font-weight: 600;
-            color: #494242;
-            background-color: #ffb35c;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
+.description {
+  font-size: 1.2rem;
+  color: #6e6e73;
+  margin-bottom: 40px;
+}
 
-        .signin {
-            margin-top: 20px;
-            font-size: 16px;
-            color: #494242;
-        }
+.btn {
+  padding: 14px 40px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  background-color: #007aff;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
 
-        .signin a {
-            color: #ffb35c;
-            text-decoration: none;
-            font-weight: 600;
-        }
-    </style>
+.btn:hover {
+  background-color: #005ecb;
+  box-shadow: 0 6px 16px rgba(0, 94, 203, 0.4);
+}
+
+.signin {
+  margin-top: 20px;
+  font-size: 0.95rem;
+}
+
+.signin a {
+  color: #007aff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .content {
+    flex-direction: column;
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .text-section {
+    margin-top: 30px;
+  }
+}
+
+</style>
+
 </head>
 <body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] flex p-6 lg:p-8 items-center lg:justify-center min-h-screen flex-col">
     <div class="container">
@@ -106,9 +129,9 @@
                 <img src="{{ asset('images/yoga.png') }}" alt="Illustration" />
             </div>
             <div class="text-section">
-                <h1>Get Organized Your Life</h1>
+                <h1>Make Life More Organized</h1>
                 <p class="description">
-                    Today is a simple and effective to-do list and task manager app which helps you manage time
+                    PlanIt is a simple and effective to-do list and task manager app which helps you manage time
                 </p>
 
                 {{-- Register Button --}}
