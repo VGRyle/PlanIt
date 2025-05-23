@@ -131,7 +131,7 @@ body, html {
             <div class="text-section">
                 <h1>Make Life More Organized</h1>
                 <p class="description">
-                    PlanIt is a simple and effective to-do list and task manager app which helps you manage time
+                PlanIt helps you organize tasks, get real-time weather, track holidays, and stay motivated—all in one place.
                 </p>
 
                 {{-- Register Button --}}
