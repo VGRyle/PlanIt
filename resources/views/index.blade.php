@@ -39,7 +39,7 @@
   }
 
   header .logo {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: 700;
   }
 
