@@ -414,44 +414,52 @@ function renderTasks() {
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
-    checkbox.checked = task.is_completed || false;
+    checkbox.checked = task.is_completed || false;  // <-- Use is_completed here
     checkbox.setAttribute('aria-label', `Mark task "${task.content}" completed`);
     checkbox.addEventListener('change', () => {
-      fetch(`/tasks/${task.id}/toggle`, { method: 'PATCH' })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            task.is_completed = data.is_completed;
-            renderTasks();
-          } else {
-            alert('Failed to update task status');
-          }
-        })
-        .catch(() => alert('Error updating task status'));
+      fetch(`/api/tasks/${task.id}/toggle`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        console.log('Toggle response:', data);
+        if (data.updated_task) {
+          task.is_completed = Boolean(data.updated_task.is_completed);  // <-- Use is_completed here too
+          renderTasks();
+        } else {
+          alert('Failed to update task status');
+        }
+      })
+      .catch(() => alert('Error updating task status'));
     });
 
     const delBtn = document.createElement('button');
-delBtn.textContent = 'Delete';
-delBtn.setAttribute('aria-label', `Delete task "${task.content}"`);
-delBtn.addEventListener('click', () => {
-  fetch(`/api/tasks/${task.id}`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-    }
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.message) {
-        tasks.splice(idx, 1);
-        renderTasks();
-      } else {
-        alert('Failed to delete task');
-      }
-    })
-    .catch(() => alert('Error deleting task'));
-});
+    delBtn.textContent = 'Delete';
+    delBtn.setAttribute('aria-label', `Delete task "${task.content}"`);
+    delBtn.addEventListener('click', () => {
+      fetch(`/api/tasks/${task.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.message) {
+          tasks.splice(idx, 1);
+          renderTasks();
+        } else {
+          alert('Failed to delete task');
+        }
+      })
+      .catch(() => alert('Error deleting task'));
+    });
+
     actionsDiv.appendChild(checkbox);
     actionsDiv.appendChild(delBtn);
 
@@ -462,10 +470,16 @@ delBtn.addEventListener('click', () => {
 }
 
 function loadTasks() {
-  fetch('/tasks')
+  fetch('/api/tasks')
     .then(response => response.json())
     .then(data => {
-      tasks = data;
+      tasks = data.map(task => ({
+        id: task.id,
+        content: task.content,
+        description: task.description,
+        due_date: task.due_date,
+        is_completed: task.is_completed || false  // <-- Use is_completed here
+      }));
       renderTasks();
     })
     .catch(error => console.error('Failed to load tasks:', error));
@@ -475,6 +489,8 @@ function loadTasks() {
 document.addEventListener('DOMContentLoaded', () => {
   loadTasks();
 });
+
+
 
 
     function addTask() {
@@ -487,7 +503,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // Send to Laravel backend
   fetch('/api/task', {
     method: 'POST',
     headers: {
@@ -500,14 +515,26 @@ document.addEventListener('DOMContentLoaded', () => {
       due_date: dueDate,
     }),
   })
-  .then(response => response.json())
-  .then(data => {
+  .then(async response => {
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error ${response.status}: ${errorText}`);
+    }
+
+    // Only parse JSON if there's a body
+    const contentType = response.headers.get('content-type');
+    let data = {};
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    }
+
     if (data.local_task) {
       tasks.push({
+        id: data.local_task.id, // make sure to capture ID if needed
         content: data.local_task.content,
         description: data.local_task.description,
-        due: data.local_task.due_date,
-        completed: false,
+        due_date: data.local_task.due_date,
+        is_completed: false,
       });
       renderTasks();
       showSection('tasks');

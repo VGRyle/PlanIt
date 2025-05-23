@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Task;
 use Illuminate\Http\Request;
 use App\Services\TodoistService;
 use App\Services\WeatherService;
@@ -11,22 +12,29 @@ use App\Services\FavQsService;
 use App\Services\PlanItService;
 use App\Services\TaskService;
 
+
 class PlannerController extends Controller
 {
-    public function addTask(Request $request)
-    {
-        $request->validate([
-            'content' => 'required|max:255',
-            'description' => 'nullable|string',
-            'due_date' => 'nullable|date',
-        ]);
+   public function addTask(Request $request, TaskService $taskService, TodoistService $todoistService)
+{
+    $request->validate([
+        'content' => 'required|max:255',
+        'description' => 'nullable|string',
+        'due_date' => 'nullable|date',
+    ]);
 
-        $task = Task::create($request->only('content', 'description', 'due_date') + ['is_completed' => false]);
+    // Add task locally
+    $response = $taskService->createTask($request->only('content', 'description', 'due_date'));
 
-        return response()->json([
-            'local_task' => $task,
-        ], 201);
+    if ($response['status'] !== 201) {
+        return response()->json(['error' => 'Failed to add task locally'], 500);
     }
+
+    // Return the created task to the frontend
+    return response()->json([
+    'local_task' => $response['data'],  // rename key here
+], 201);
+}
 
     public function getWeather($city, WeatherService $weather)
     {
@@ -104,13 +112,15 @@ class PlannerController extends Controller
     }
 
     public function toggleComplete($id, TaskService $taskService)
-    {
-        $response = $taskService->toggleComplete($id);
+{
+    $response = $taskService->toggleComplete($id);
 
-        if (isset($response['error'])) {
-            return response()->json(['error' => $response['error']], $response['status']);
-        }
-
-        return response()->json($response['data'], $response['status']);
+    if (isset($response['error'])) {
+        return response()->json(['error' => $response['error']], $response['status']);
     }
+
+    return response()->json([
+        'updated_task' => $response['data']
+    ], $response['status']);
+}
 }
