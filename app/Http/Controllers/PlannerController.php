@@ -14,19 +14,19 @@ use App\Models\Task;
 class PlannerController extends Controller
 {
     public function addTask(Request $request)
-    {
-        $request->validate([
-            'content' => 'required|max:255',
-            'description' => 'nullable|string',
-            'due_date' => 'nullable|date',
-        ]);
+{
+    $request->validate([
+        'content' => 'required|max:255',
+        'description' => 'nullable|string',
+        'due_date' => 'nullable|date',
+    ]);
 
-        $task = Task::create($request->only('content', 'description', 'due_date') + ['is_completed' => false]);
+    $task = Task::create($request->only('content', 'description', 'due_date') + ['is_completed' => false]);
 
-        return response()->json([
-            'local_task' => $task,
-        ], 201);
-    }
+    return response()->json([
+        'local_task' => $task,
+    ], 201);
+}
 
     public function getWeather($city, WeatherService $weather)
     {

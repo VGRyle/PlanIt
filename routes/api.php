@@ -11,6 +11,6 @@ Route::get('/quote/motivation', [PlannerController::class, 'getMotivationalQuote
 Route::post('/planit/compile', [PlannerController::class, 'compilePlan']);
 
 Route::get('/tasks', [PlannerController::class, 'getTasks']);      // Get all tasks
-Route::post('/tasks', [PlannerController::class, 'storeTask']);   // Add new task
+Route::post('/tasks', [PlannerController::class, 'storeTask']);    // Add new task
 Route::delete('/tasks/{id}', [PlannerController::class, 'deleteTask']); // Delete task by id
 Route::patch('/tasks/{id}/toggle', [PlannerController::class, 'toggleComplete']);

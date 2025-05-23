@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;600&display=swap" rel="stylesheet">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta charset="UTF-8" />
   <title>🌿 PlanIt Dashboard</title>
 
@@ -275,7 +277,7 @@
 
     <nav class="sidebar" role="navigation" aria-label="API Sections">
       <a href="#tasks" class="active" onclick="showSection('tasks')">Tasks</a>
-      <a href="#todoist" onclick="showSection('todoist')">Todoist</a>
+      <a href="#todoist" onclick="showSection('todoist')">To do</a>
       <a href="#weather" onclick="showSection('weather')">Weather</a>
       <a href="#timezone" onclick="showSection('timezone')">Timezone</a>
       <a href="#holidays" onclick="showSection('holidays')">Holidays</a>
@@ -291,7 +293,7 @@
 
       <!-- Todoist Section: only the add task form -->
       <section id="todoist-section" style="display:none;">
-        <h2>Add Task (Todoist)</h2>
+        <h2>Add Task</h2>
         <input type="text" id="taskContent" placeholder="Task title" aria-label="Task title" />
         <input type="text" id="taskDescription" placeholder="Task description" aria-label="Task description" />
         <input type="date" id="taskDueDate" aria-label="Task due date" />
@@ -364,103 +366,166 @@
     // Start with tasks visible
     showSection('tasks');
 
-    // Task data and rendering
-    let tasks = [];
+let tasks = [];
 
-    function renderTasks() {
-      const list = document.getElementById('task-list');
-      list.innerHTML = '';
-      if (tasks.length === 0) {
-        list.innerHTML = '<li>No saved tasks</li>';
-        return;
-      }
-      tasks.forEach((task, idx) => {
-        const li = document.createElement('li');
-        li.setAttribute('tabindex', 0);
+function renderTasks() {
+  const list = document.getElementById('task-list');
+  list.innerHTML = '';
+  if (tasks.length === 0) {
+    list.innerHTML = '<li>No saved tasks</li>';
+    return;
+  }
+  tasks.forEach((task, idx) => {
+    const li = document.createElement('li');
+    li.setAttribute('tabindex', 0);
 
-        const headerDiv = document.createElement('div');
-        headerDiv.className = 'task-header';
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'task-header';
 
-        const contentSpan = document.createElement('span');
-        contentSpan.className = 'task-content';
-        contentSpan.textContent = task.content;
+    const contentSpan = document.createElement('span');
+    contentSpan.className = 'task-content';
+    contentSpan.textContent = task.content;
 
-        headerDiv.appendChild(contentSpan);
+    headerDiv.appendChild(contentSpan);
 
-        if (task.due) {
-          const dueSpan = document.createElement('span');
-          dueSpan.className = 'task-due';
-          dueSpan.textContent = `Due: ${task.due}`;
-          headerDiv.appendChild(dueSpan);
-        }
-
-        li.appendChild(headerDiv);
-
-        if (task.description) {
-          const descP = document.createElement('p');
-          descP.className = 'task-description';
-          descP.textContent = task.description;
-          li.appendChild(descP);
-        }
-
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'task-actions';
-
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.checked = task.completed || false;
-        checkbox.setAttribute('aria-label', `Mark task "${task.content}" completed`);
-        checkbox.addEventListener('change', () => {
-          tasks[idx].completed = checkbox.checked;
-          renderTasks();
-        });
-
-        const delBtn = document.createElement('button');
-        delBtn.textContent = 'Delete';
-        delBtn.setAttribute('aria-label', `Delete task "${task.content}"`);
-        delBtn.addEventListener('click', () => {
-          tasks.splice(idx, 1);
-          renderTasks();
-        });
-
-        actionsDiv.appendChild(checkbox);
-        actionsDiv.appendChild(delBtn);
-
-        li.appendChild(actionsDiv);
-
-        list.appendChild(li);
-      });
+    if (task.due_date) {
+      const dueSpan = document.createElement('span');
+      dueSpan.className = 'task-due';
+      dueSpan.textContent = `Due: ${task.due_date}`;
+      headerDiv.appendChild(dueSpan);
     }
 
-    function addTask() {
-      const content = document.getElementById('taskContent').value.trim();
-      const description = document.getElementById('taskDescription').value.trim();
-      const dueDate = document.getElementById('taskDueDate').value;
+    li.appendChild(headerDiv);
 
-      if (!content) {
-        alert('Task title is required');
-        return;
+    if (task.description) {
+      const descP = document.createElement('p');
+      descP.className = 'task-description';
+      descP.textContent = task.description;
+      li.appendChild(descP);
+    }
+
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'task-actions';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = task.is_completed || false;
+    checkbox.setAttribute('aria-label', `Mark task "${task.content}" completed`);
+    checkbox.addEventListener('change', () => {
+      fetch(`/tasks/${task.id}/toggle`, { method: 'PATCH' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            task.is_completed = data.is_completed;
+            renderTasks();
+          } else {
+            alert('Failed to update task status');
+          }
+        })
+        .catch(() => alert('Error updating task status'));
+    });
+
+    const delBtn = document.createElement('button');
+delBtn.textContent = 'Delete';
+delBtn.setAttribute('aria-label', `Delete task "${task.content}"`);
+delBtn.addEventListener('click', () => {
+  fetch(`/api/tasks/${task.id}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    }
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.message) {
+        tasks.splice(idx, 1);
+        renderTasks();
+      } else {
+        alert('Failed to delete task');
       }
+    })
+    .catch(() => alert('Error deleting task'));
+});
+    actionsDiv.appendChild(checkbox);
+    actionsDiv.appendChild(delBtn);
 
+    li.appendChild(actionsDiv);
+
+    list.appendChild(li);
+  });
+}
+
+function loadTasks() {
+  fetch('/tasks')
+    .then(response => response.json())
+    .then(data => {
+      tasks = data;
+      renderTasks();
+    })
+    .catch(error => console.error('Failed to load tasks:', error));
+}
+
+// Call loadTasks after DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  loadTasks();
+});
+
+
+    function addTask() {
+  const content = document.getElementById('taskContent').value.trim();
+  const description = document.getElementById('taskDescription').value.trim();
+  const dueDate = document.getElementById('taskDueDate').value;
+
+  if (!content) {
+    alert('Task title is required');
+    return;
+  }
+
+  // Send to Laravel backend
+  fetch('/api/task', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+    },
+    body: JSON.stringify({
+      content: content,
+      description: description,
+      due_date: dueDate,
+    }),
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.local_task) {
       tasks.push({
-        content,
-        description,
-        due: dueDate,
+        content: data.local_task.content,
+        description: data.local_task.description,
+        due: data.local_task.due_date,
         completed: false,
       });
-
-      // Clear form
-      document.getElementById('taskContent').value = '';
-      document.getElementById('taskDescription').value = '';
-      document.getElementById('taskDueDate').value = '';
-
       renderTasks();
       showSection('tasks');
 
-      // Show confirmation in Todoist section's result box
-      const resultArea = document.getElementById('taskResult');
-      resultArea.textContent = `Added task: ${content}${dueDate ? ' (Due ' + dueDate + ')' : ''}`;
+      // Confirmation message
+      document.getElementById('taskResult').textContent =
+        `Added task: ${content}${dueDate ? ' (Due ' + dueDate + ')' : ''}`;
+    } else {
+      alert('Failed to add task');
+      console.error(data);
     }
+  })
+  .catch(error => {
+    alert('An error occurred');
+    console.error(error);
+  });
+
+  // Clear form
+  document.getElementById('taskContent').value = '';
+  document.getElementById('taskDescription').value = '';
+  document.getElementById('taskDueDate').value = '';
+}
+
 
     function getWeather() {
   const city = document.getElementById('city').value;
@@ -568,7 +633,17 @@ function getHolidays() {
       document.getElementById('motivationalQuoteResult').innerText = 'Error: ' + err.message;
     });
 }
-
+ document.addEventListener('DOMContentLoaded', function () {
+      fetch('/api/tasks')
+        .then(response => response.json())
+        .then(data => {
+          tasks = data;
+          renderTasks();
+        })
+        .catch(error => {
+          console.error('Failed to load tasks:', error);
+        });
+    });
 
     window.addEventListener('DOMContentLoaded', loadTasks);
   </script>
