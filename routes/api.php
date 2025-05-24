@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PlannerController;
 
 Route::middleware(['web', 'auth:sanctum'])->group(function () {
-    Route::post('/tasks', [PlannerController::class, 'addTask']);
+    Route::post('/task', [PlannerController::class, 'addTask']);
     Route::get('/tasks', [PlannerController::class, 'getTasks']);
     Route::delete('/tasks/{id}', [PlannerController::class, 'deleteTask']);
     Route::patch('/tasks/{id}/toggle', [PlannerController::class, 'toggleComplete']);
