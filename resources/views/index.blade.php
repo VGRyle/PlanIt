@@ -254,29 +254,114 @@
       padding: 28px 24px;
     }
   }
+  #profile-card {
+  position: absolute;
+  top: 40px; /* adjust to appear below the Profile button */
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  width: 260px;       /* set a smaller fixed width */
+  padding: 16px;      /* less padding */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  font-size: 14px;    /* smaller font */
+  color: #333;
+  z-index: 1000;
+}
+
+#profile-card h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+#profile-card p {
+  margin-bottom: 12px;
+  color: #666;
+}
+
+#profile-card form button {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 8px;
+  background-color: #ff3b30;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#profile-card form button:hover {
+  background-color: #d32f2f;
+}
 </style>
 
-</head>
+<header style="position: relative;">
+  <span class="logo">PlanIt</span>
+  @if (Route::has('login'))
+    <nav class="auth-nav" style="position: relative;">
+      @auth
+        <!-- Profile button -->
+        <button id="profile-btn" onclick="toggleProfileCard()" aria-haspopup="true" aria-expanded="false"
+          style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-weight: 600;">
+          {{ Auth::user()->name }}
+          <svg style="margin-left:6px; vertical-align:middle;" class="fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="14" height="14">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
 
-<body>
+        <!-- Mini profile card dropdown, initially hidden -->
+        <div id="profile-card" style="display:none; position:absolute; right:0; top:40px; background:white; border:1px solid #ccc; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.15); padding:16px; width:240px; z-index:1000; font-size:14px; color:#333;">
+          <div style="border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px;">
+            <p style="font-weight: 700; margin: 0;">{{ Auth::user()->name }}</p>
+            <p style="color:#666; margin: 0; font-size: 13px;">{{ Auth::user()->email }}</p>
+          </div>
 
-  <header><span class="logo">PlanIt</span>
-    @if (Route::has('login'))
-  <nav class="auth-nav">
-    @auth
-      <form id="logout-form" action="{{ route('logout') }}" method="POST">
-        @csrf
-        <button type="submit">Logout</button>
-      </form>
-    @else
-      <a href="{{ route('login') }}">Login</a>
-      @if (Route::has('register'))
-        <a href="{{ route('register') }}">Register</a>
-      @endif
-    @endauth
-  </nav>
-@endif
-  </header>
+          <a href="{{ route('profile.edit') }}" style="display: block; padding: 8px 0; color: #3b82f6; font-weight: 600; text-decoration: none; border-bottom: 1px solid #eee;">
+            Profile Settings
+          </a>
+
+          <form id="logout-form" action="{{ route('logout') }}" method="POST" style="margin-top: 12px;">
+            @csrf
+            <button type="submit" style="width: 100%; background: #ff3b30; color: #fff; border: none; border-radius: 8px; padding: 10px; cursor: pointer; font-weight: 600;">
+              Logout
+            </button>
+          </form>
+        </div>
+      @else
+        <a href="{{ route('login') }}">Login</a>
+        @if (Route::has('register'))
+          <a href="{{ route('register') }}">Register</a>
+        @endif
+      @endauth
+    </nav>
+  @endif
+
+  <script>
+    function toggleProfileCard() {
+      const card = document.getElementById('profile-card');
+      const btn = document.getElementById('profile-btn');
+
+      if (card.style.display === 'block') {
+        card.style.display = 'none';
+        btn.setAttribute('aria-expanded', 'false');
+      } else {
+        card.style.display = 'block';
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    }
+
+    // Close dropdown if clicked outside
+    document.addEventListener('click', function(event) {
+      const card = document.getElementById('profile-card');
+      const btn = document.getElementById('profile-btn');
+      if (!card.contains(event.target) && !btn.contains(event.target)) {
+        card.style.display = 'none';
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  </script>
+</header>
 
   <div class="container">
 
