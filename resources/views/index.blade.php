@@ -470,7 +470,9 @@ function renderTasks() {
 }
 
 function loadTasks() {
-  fetch('/api/tasks')
+  fetch('/api/tasks', {
+    credentials: 'include'
+  })
     .then(response => response.json())
     .then(data => {
       tasks = data.map(task => ({
@@ -487,7 +489,15 @@ function loadTasks() {
 
 // Call loadTasks after DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  loadTasks();
+  // First, fetch the CSRF cookie required by Laravel Sanctum
+  fetch('/sanctum/csrf-cookie', {
+    credentials: 'include'  // important to send cookies
+  }).then(() => {
+    // Once CSRF cookie is set, it's safe to make authenticated requests
+    loadTasks();
+  }).catch(error => {
+    console.error('Failed to get CSRF cookie:', error);
+  });
 });
 
 
@@ -504,17 +514,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   fetch('/api/task', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-    },
-    body: JSON.stringify({
-      content: content,
-      description: description,
-      due_date: dueDate,
-    }),
-  })
+  method: 'POST',
+  credentials: 'include',  // <-- add this line
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+  },
+  body: JSON.stringify({
+    content: content,
+    description: description,
+    due_date: dueDate,
+  }),
+})
   .then(async response => {
     if (!response.ok) {
       const errorText = await response.text();

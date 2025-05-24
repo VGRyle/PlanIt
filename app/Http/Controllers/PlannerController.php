@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use App\Services\TodoistService;
@@ -12,9 +13,14 @@ use App\Services\FavQsService;
 use App\Services\PlanItService;
 use App\Services\TaskService;
 
-
 class PlannerController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth:sanctum');
+    }
+
+
    public function addTask(Request $request, TaskService $taskService, TodoistService $todoistService)
 {
     $request->validate([
@@ -24,7 +30,12 @@ class PlannerController extends Controller
     ]);
 
     // Add task locally
-    $response = $taskService->createTask($request->only('content', 'description', 'due_date'));
+    $response = $taskService->createTask(
+    array_merge(
+        $request->only('content', 'description', 'due_date'),
+        ['user_id' => auth()->id()] // Assign task to the logged-in user
+    )
+);
 
     if ($response['status'] !== 201) {
         return response()->json(['error' => 'Failed to add task locally'], 500);
