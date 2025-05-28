@@ -34,7 +34,12 @@ WORKDIR /var/www/html
 # Copy app files
 COPY . /var/www/html
 
-
+# Install Node.js (for Laravel Vite assets)
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install \
+    && npm run build
+    
 # Install PHP dependencies without running scripts
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
