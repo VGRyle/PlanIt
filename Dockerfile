@@ -31,11 +31,14 @@ WORKDIR /var/www/html
 # Copy app files
 COPY . /var/www/html
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Install PHP dependencies without scripts
+RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # Set permissions for Laravel storage and cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Run Laravel post-install script manually
+RUN php artisan package:discover --ansi
 
 # Expose port 80
 EXPOSE 80
